@@ -1,12 +1,12 @@
 require('dotenv').config()
 const express = require('express')
-const app = express()
 const massive = require('massive')
-const { SERVER_PORT, CONNECTION_STRING } = process.env
+const app = express()
 const setup = require('./controllers/setup')
 const authCtrl = require('./controllers/authController')
 const carCtrl = require('./controllers/carController')
 const movieCtrl = require('./controllers/moviesController')
+const { SERVER_PORT, CONNECTION_STRING } = process.env
 
 app.use(express.json())
 
@@ -53,4 +53,17 @@ app.delete('/auth/logout', authCtrl.logout)
 //! Seeding endpoint.  Keep at bottom.
 app.post('/api', setup.seed)
 
-app.listen(SERVER_PORT, () => console.log(`Get it on port ${SERVER_PORT}`))
+massive({
+    connectionString: CONNECTION_STRING,
+    ssl: { regjectUnauthorized: false }
+}).then((dbInstance) => {
+    app.set('db', dbInstance)
+    console.log('Yer a database Harry')
+    app.listen(SERVER_PORT, () => console.log(`Get it on port ${SERVER_PORT}`))
+})
+    .catch((err) => {
+        console.log('Could not connect to database.  Output:')
+        console.log(err)
+        process.end()
+    })
+
